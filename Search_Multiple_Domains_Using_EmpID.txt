@@ -1,0 +1,38 @@
+<# 
+This script searches 2 AD Domains using Employee ID field and create 
+an output file with Source, Target SamAccountNames and Name. 
+
+www.sivarajan.com
+
+Reference: http://portal.sivarajan.com/2010/08/search-users-from-2-ad-domains-using.html
+
+#>
+$UserInfoFile = New-Item -type file -force "C:\Scripts\UserInfo.csv" 
+"SourceSamAccountName`tTargetSamAccountName`tName" | Out-File $UserInfoFile -encoding ASCII
+Import-CSV "C:\Scripts\EmpID.csv" | ForEach-Object {
+	$EMP = $_.EMPID
+	$ObjFilter = "(&(objectCategory=User)(employeeID=$EMP))"
+	$objSearch = New-Object System.DirectoryServices.DirectorySearcher
+	$objSearch.PageSize = 15000
+	$objSearch.Filter = $ObjFilter
+#Search objects in the Source Domain
+	$objSearch.SearchRoot = "LDAP://dc=ss-infra, dc=lab"
+	$AllObj = $objSearch.FindAll()
+	foreach ($Obj in $AllObj)
+	   	{	$objItemS = $Obj.Properties
+			$objItemS.samaccountname
+			$Ssamaccountname = $objItemS.samaccountname
+		}
+#Search objects in the Target Domain
+	$objSearch.SearchRoot = "LDAP://dc=santhosh, dc=lab"
+	$AllObj = $objSearch.FindAll()
+	foreach ($Obj in $AllObj)
+	   	{	$objItemT = $Obj.Properties
+			$objItemT.samaccountname
+			$Tsamaccountname = $objItemT.samaccountname
+			$Tname = $objItemT.name
+			"$Ssamaccountname`t$Tsamaccountname`t$Tname" | Out-File $UserInfoFile -encoding ASCII -append
+
+		}
+
+}

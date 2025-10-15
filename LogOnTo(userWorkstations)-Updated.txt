@@ -1,0 +1,26 @@
+# 
+# www.sivarajan.com
+# blogs.sivarajan.com
+# You can use this PowerShell script to update or modify the Log On To (userWorkstations) attribute in Active Directory.
+# Version 1.1
+# Author - Santhosh Sivarajan
+# 
+Clear
+Import-CSV C:\Scripts\input.csv | % { 
+$UserN = $_.UserName
+$ComputerN = $_.ComputerName
+$ObjFilter = "(&(objectCategory=person)(objectCategory=User)(samaccountname=$UserN))" 
+$objSearch = New-Object System.DirectoryServices.DirectorySearcher 
+$objSearch.PageSize = 15000 
+$objSearch.Filter = $ObjFilter  
+$objSearch.SearchRoot = "LDAP://dc=infralab,dc=local" 
+$AllObj = $objSearch.findOne()
+$user = [ADSI] $AllObj.path
+$ErrorActionPreference = "silentlycontinue"
+If (($user.get("userWorkstations")) -ne $null)
+{$ComputerN = $user.get("userWorkstations")+","+ $ComputerN}
+Write-host -NoNewLine "Updating $UserN Properties ..."
+$user.psbase.invokeSet("userWorkstations",$ComputerN)
+Write-host "Done!"
+$user.setinfo() 
+}

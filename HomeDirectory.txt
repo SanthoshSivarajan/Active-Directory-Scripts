@@ -1,0 +1,15 @@
+#
+# www.sivarajan.com
+#
+$ObjFilter = "(&(objectCategory=person)(objectCategory=User))" 
+    $objSearch = New-Object System.DirectoryServices.DirectorySearcher 
+    $objSearch.PageSize = 15000 
+    $objSearch.Filter = $ObjFilter  
+    $objSearch.SearchRoot = "LDAP://dc=santhosh,dc=lab" 
+    $AllObj = $objSearch.FindAll() 
+    foreach ($Obj in $AllObj) 
+           {
+            $objItemS = $Obj.Properties
+            $objItemS.samaccountname | out-file "c:\scripts\output.csv" -append
+            $objItemS.homedirectory | out-file "c:\scripts\output.csv" -append
+            }

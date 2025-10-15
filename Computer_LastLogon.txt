@@ -1,0 +1,38 @@
+<#
+Search Active Directory and Get Comptuer Information
+
+www.sivarajan.com
+Blogs:  http://blogs.sivarajan.com
+
+#>
+cls
+$ComputerInfoFile = New-Item -type file -force "C:\Scripts\ComputerInfo.csv" 
+"ComuterName`tlastLogon`tlastLogoff`tDistinguishedName`tOperatingSystem" | Out-File $ComputerInfoFile -encoding ASCII
+$ObjFilter = "(objectClass=Computer)"
+$objSearch = New-Object System.DirectoryServices.DirectorySearcher
+$objSearch.PageSize = 15000
+$objSearch.Filter = $ObjFilter
+$objSearch.SearchRoot = "LDAP://dc=infralab, dc=local"
+$AllObj = $objSearch.FindAll()
+foreach ($Obj in $AllObj)
+	   	{	
+			$objItemT = $Obj.Properties
+			$CName = $objItemT.name
+			$ClastLogon = $objItemT.lastlogon
+            $ClastLogoff = $objItemT.lastlogoff
+            $CCreated = $objItemT.whencreated
+            $CDN =$objItemT.distinguishedname
+            $COS =$objItemT.operatingsystem
+            $TClastLogon = [datetime]::FromFileTime("$ClastLogon")
+            $TClastLogoff = [datetime]::FromFileTime("$ClastLogoff")
+            if($TClastLogon -eq "12/31/1600 18:00:00") {[string]$TClastLogon = "Never"}
+            if($TClastLogoff -eq "12/31/1600 18:00:00") {[string]$TClastLogoff = "Never"}
+			Write-host "Computer Name:`t$CName"
+			Write-host "Last Log On:`t$TClastLogon"
+			Write-host "Last Loff Off:`t$TClastLogoff"
+            Write-host "Distinguished Name:`t$CDN"
+            Write-host "Operating System:`t$COS"
+			Write-host "-------------------------------------------------------------------------------------"
+            $TCPSet
+			"$CName`t$TClastLogon`t$TClastLogoff`t$CDN`t$COS" | Out-File $ComputerInfoFile -encoding ASCII -append
+		}

@@ -1,0 +1,126 @@
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+'
+'	Name	:McAFee Uninstallation and Forefront Client Security Installation Script
+'
+'	Author	:Santhosh Sivarajan
+''
+'	Date	:12/08/2008
+'
+'	Ref	:http://santhoshsivarajan.blogspot.com/2010/02/uninstall-mcafee-and-install-forefront.html
+'
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Option Explicit
+ 
+const HKEY_LOCAL_MACHINE = &H80000002
+Dim McAProductName, McAProductKey, FProductName, FProductKey, Msg, MsgBoxStyle, RegKey
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sub GetMcAKey()
+ 
+dim oReg, sPath, aKeys, sName, sKey
+Set oReg = GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv")
+ 
+sPath = "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+oReg.EnumKey HKEY_LOCAL_MACHINE, sPath, aKeys
+ 
+For Each sKey in aKeys
+        oReg.GetStringValue HKEY_LOCAL_MACHINE, sPath & "\" & sKey, "DisplayName", sName
+        If Not IsNull(sName) Then 
+               if (sName = "McAfee VirusScan Enterprise") then
+                       McAProductKey = sKey
+                       McAProductName = sName
+               end if
+        end if
+Next
+end sub
+ 
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sub UninstallMcA(key, name)
+dim cmd, objShell, iReturn, oshell
+
+cmd = "C:\windows\system32\msiexec.exe /q/x " & key
+set objShell = wscript.createObject("wscript.shell")
+ 
+objShell.LogEvent 0, "Removing the program [" & name & "] under Product Key [" & key & "]" & vbCrLf & "Executing command: " & vbCrLf & cmd
+ 
+iReturn=objShell.Run(cmd,1,TRUE)
+ 
+	if (iReturn = 0) then
+        	objShell.LogEvent 0, "Program [" & name & "] was successfully removed"
+	else
+        	objShell.LogEvent 0, "Failed to remove the program [" & name & "]."
+	end if
+ 
+Set objShell = Nothing  
+end sub
+
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sub GetFCSKey()
+ 
+dim oReg, sPath, aKeys, sName, sKey
+Set oReg = GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv")
+ 
+sPath = "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+oReg.EnumKey HKEY_LOCAL_MACHINE, sPath, aKeys
+ 
+For Each sKey in aKeys
+        oReg.GetStringValue HKEY_LOCAL_MACHINE, sPath & "\" & sKey, "DisplayName", sName
+        If Not IsNull(sName) Then 
+               if (sName = "Microsoft Forefront Client Security Antimalware Service") then
+                       FProductKey = sKey
+                       FProductName = sName
+               end if
+        end if
+Next
+ 
+end sub
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sub InstallFCS()
+dim objwshShell, sComputerName, x86InstallLocation, x64InstallLocation, InstallationPath, LogsPath, Proc, intFCS, sInstallCommand
+Set objWshShell = WScript.CreateObject("WScript.Shell")
+sComputerName = objWshShell.ExpandEnvironmentStrings("%COMPUTERNAME%")
+x86InstallLocation = "\\houlab01.infralab.local\X86\CLIENTSETUP.EXE /CG HOUFCS /MS houfcs01.infralab.local"
+x64InstallLocation = "\\houlab01.infralab.local\X64\CLIENTSETUP.EXE /CG HOUFCS /MS houfcs01.infralab.local"
+InstallationPath = "C:\Program Files\Forefront Client Security"
+LogsPath = "C:\Program Files\Forefront Client Security\Logs"
+
+Proc = objWshShell.RegRead("HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment\PROCESSOR_ARCHITECTURE")
+
+	If Proc = "x86" Then
+		sInstallCommand = x86InstallLocation & " /I " & Chr(34) & InstallationPath & Chr(34) & " /L " & Chr(34) & LogsPath & Chr(34)
+	Else
+		sInstallCommand = x64InstallLocation & " /I " & Chr(34) & InstallationPath & Chr(34) & " /L " & Chr(34) & LogsPath & Chr(34)
+	End If
+
+intFCS = objWshShell.Run(sInstallCommand, 0, TRUE)
+'Wscript.echo "Before GPUpdate"
+objwshShell.Run "C:\WINDOWS\system32\gpupdate.exe /force" 
+'Wscript.echo "After GPUpdate"
+end sub
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+McAProductKey = ""
+McAProductName = ""
+FProductKey = ""
+FProductName = ""
+
+
+call GetMcAKey()
+
+	if Not (McAProductKey = "") then
+		call UninstallMcA(McAProductKey, McAProductName)
+	end if
+
+
+call GetFCSKey()
+	if (FProductKey = "" And McAProductKey = "") then
+		call InstallFCS()
+	end if
+
+

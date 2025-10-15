@@ -1,0 +1,8 @@
+REM
+REM http://portal.sivarajan.com/2010/04/add-workstation-to-domain-batch-file.html
+REM
+REM 
+@echo off
+FOR /f %%i in (C:\Computers.txt) DO (
+netdom join /d:infralab.local %%i /OU:OU=Test,DC=infralab,DC=local
+)

@@ -1,0 +1,42 @@
+<#
+This script can be used to list Administrator Group members from a server
+
+Input  - Servers.csv
+Output - Email and SGroupMemberDetails.csv
+
+Blogs: http://blogs.sivarajan.com
+
+www.sivarajan.com
+#>
+
+Cls
+$From = "santhosh@sanlab.com"
+$To = "santhosh@sanlab.com"
+$SMTPServer = "mail.sanlab.com"
+$SMTP = new-object Net.Mail.SmtpClient($SMTPServer)
+$GFile = New-Item -type file -force "C:\Scripts\SGroupMemberDetails.csv"
+Import-CSV "C:\Scripts\Servers.csv" | ForEach-Object {
+$N = 0
+$SName = $_.ServerName
+"Server Name -  $SName" | Out-File $GFile -encoding ASCII -append
+$group = [ADSI]("WinNT://$SName/Administrators,group")  
+$GMembers = $group.psbase.invoke("Members")
+$GMembers | ForEach-Object {$_.GetType().InvokeMember("Name",'GetProperty', $null, $_, $null) | Out-File $GFile -encoding ASCII -append
+$N++
+}
+    If ($N -gt 5)
+        {
+        $Sub = "Administrator Group Details on $SName Server"
+        $Ebody = "Administrator Group on $SName Server has $N members."
+        $SMTP.Send($From, $To, $Sub, $Ebody)
+        #Add specific details/function here.  
+        }
+    Else 
+        {
+        $Sub = "Administrator Group Details on $SName Server"
+        $Ebody = "Administrator Group on $SName Server has $N members."
+        $SMTP.Send($From, $To, $Sub, $Ebody)
+        #Add specific details/function here.  
+        }
+
+}

@@ -1,0 +1,29 @@
+#
+# www.sivarajan.com
+#
+
+Clear
+$ServerInfoFile = New-Item -type file -force "C:\Scripts\Servers.csv"
+$GFile = New-Item -type file -force "C:\Scripts\SGroupMemberDetails.csv"
+"ServerName | Out-File $ServerInfoFile -encoding ASCII
+# Search AD for comptuer objects
+$ObjFilter = "(objectClass=Computer)" #update the filter with Server specfic filter based on your requirement. 
+$objSearch = New-Object System.DirectoryServices.DirectorySearcher
+$objSearch.PageSize = 15000
+$objSearch.Filter = $ObjFilter
+$objSearch.SearchRoot = "LDAP://dc=infralab, dc=local" #udpate the filter with your OU DN or domain name
+$AllObj = $objSearch.FindAll()
+foreach ($Obj in $AllObj)
+	   	{	
+			$objItemT = $Obj.Properties
+			$CName = $objItemT.name
+			"$CName" | Out-File $ComputerInfoFile -encoding ASCII -append
+		}
+# Get local admin details
+Import-CSV "C:\Scripts\Servers.csv" | ForEach-Object {
+$SName = $_.ServerName
+"Server Name -  $SName" | Out-File $GFile -encoding ASCII -append
+$group = [ADSI]("WinNT://$SName/Administrators,group")  
+$GMembers = $group.psbase.invoke("Members")
+$GMembers | ForEach-Object {$_.GetType().InvokeMember("Name",'GetProperty', $null, $_, $null) | Out-File $GFile -encoding ASCII -append
+}

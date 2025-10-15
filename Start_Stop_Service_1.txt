@@ -1,0 +1,23 @@
+<# www.sivarajan.com
+blog.sivarajan.com
+#>
+cls
+$OutputFile = New-Item -type file -force "C:\Scripts\ServiceOutput.csv"
+$Cred = Get-Credential
+$service = "mpssvc"
+Import-CSV C:\Scripts\input.csv | % { 
+$computer = $_.ComputerName
+$result = (gwmi win32_service -computername $computer -filter "name='$service'" -Credential $cred).stopservice()
+    If ($result.ReturnValue -eq "0") 
+    {
+    write-host "$Computer -> Service Stopped Successfully"
+    "$Computer -> Service Stopped Successfully" | Out-File $OutputFile -encoding ASCII -append
+    #$result.ReturnValue info: http://msdn.microsoft.com/en-us/library/aa393673(v=vs.85).aspx
+    }
+}
+
+<#
+$result = (gwmi win32_service -computername $computer -filter "name='$service'" -Credential $cred).startervice()
+$result = (gwmi win32_service -computername $computer -filter "name='$service'" -Credential $cred).ChangeStartMode("Disabled")
+$result = (gwmi win32_service -computername $computer -filter "name='$service'" -Credential $cred).ChangeStartMode("Automatic")
+#>

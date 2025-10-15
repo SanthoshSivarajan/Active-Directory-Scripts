@@ -1,0 +1,9 @@
+#www.sivarajan.com
+#This script requires PowerShell AD Module
+#
+Import-module ActiveDirectory  
+Import-CSV "C:\Scripts\Users.csv" | % { 
+$User = $_.UserName 
+$ID = $_.EmployeeID 
+Set-ADUser $User -employeeID $ID 
+} 

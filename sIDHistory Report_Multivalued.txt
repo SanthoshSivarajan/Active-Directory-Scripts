@@ -1,0 +1,32 @@
+<# Generate SID History Report - Supports multiple values
+
+www.sivarajan.com
+
+http://blogs.sivarajan.com
+
+#>
+
+$UserInfoFile = New-Item -type file -force "C:\Scripts\UserInfo.txt" 
+"SamAccountName`tSIDHistory" | Out-File $UserInfoFile -encoding ASCII
+$ObjFilter = "(&(objectCategory=person)(objectClass=user)(sidHistory=*))"
+$objSearch = New-Object System.DirectoryServices.DirectorySearcher
+$objSearch.PageSize = 15000
+$objSearch.Filter = $ObjFilter
+$objSearch.SearchRoot = "LDAP://dc=santhosh, dc=lab"
+$AllObj = $objSearch.FindAll()
+foreach ($Obj in $AllObj)
+	   	{	
+			$objItemT = $Obj.Properties
+			$tsam = $objItemT.samaccountname
+			write-host $tsam 
+			$objpath = $obj.path
+			$objpath1 =[ADSI]"$objpath"
+           	$objectSIDs = $objpath1.getex("sidhistory")
+                foreach ($objectSID in $objectSIDs)
+                    {
+                        $sidHist = new-object System.Security.Principal.SecurityIdentifier $objectSID,0 
+                        write-host $sidHist 
+                        "$tsam`t$sidHist" | Out-File $UserInfoFile -encoding ASCII -append
+                    }
+			
+		}

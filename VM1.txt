@@ -1,0 +1,34 @@
+<#
+Identify the Physical Host of a Virtual Server
+
+www.sivarajan.com
+
+blogs.sivarajan.com
+#>
+cls
+$OutputFile= New-Item -type file -force "C:\Scripts\VM_ServerInfo.csv"
+Add-Content $OutputFile "ServerName`tPhysicalHost"
+Import-CSV C:\Scripts\Servers.csv |  % { 
+	$ServerN = $_.ServerName
+    Write-host "Checking $ServerN Server....."
+    $adminpath = Test-Path \\$ServerN\admin$
+    If ($adminpath -eq "TRUE")
+        {
+        	$regKey= $reg.OpenSubKey("SOFTWARE\\Microsoft\\Virtual Machine\\Guest\\Parameters")
+            	if (!$regKey)
+                	{
+                        Add-Content $OutputFile $ServerN`t"Error - Not a Virtual Server"
+                    }
+            	else 
+                	{
+                    	$PFQDN = $regkey.GetValue("PhysicalHostNameFullyQualified")
+						Add-Content $OutputFile $ServerN`t$PFQDN
+                	}
+		}
+	Else
+		{
+            Add-Content $OutputFile $ServerN`t"Error - The network path was not found"
+        }
+      
+}
+Write-host "Complete. Review $OutputFile file for the result" 

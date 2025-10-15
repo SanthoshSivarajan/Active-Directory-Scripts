@@ -1,0 +1,48 @@
+#Search AD User and Computer Objects - Santhosh Sivarajan
+#
+#www.sivarajan.com
+#
+#Reference: http://portal.sivarajan.com/2010/07/search-ad-users-and-computes-powershell.html
+#
+cls
+Function ADUserSearch
+{
+	$ADUserFile = New-Item -type file -force "C:\Scripts\ADUserInfo.csv"
+	$ObjFiler = "(objectCategory=User)"
+	$objSearch = New-Object System.DirectoryServices.DirectorySearcher
+	$objSearch.SearchRoot = "LDAP://dc=infralab, dc=local"
+	$ObjProp = "samaccountname"
+	$objSearch.Filter = $ObjFiler
+	$AllObj = $objSearch.FindAll()
+	foreach ($Obj in $AllObj)
+	   	{	$objItem = $Obj.Properties
+			$objItem.samaccountname
+			$objItem.samaccountname | Out-File $ADUserFile -encoding ASCII -append
+		}
+}
+Function ADCompSearch
+{
+	$ADCompFile = New-Item -type file -force "C:\Scripts\ADCompInfo.csv"
+	$ObjFiler = "(objectCategory=Computer)"
+	$objSearch = New-Object System.DirectoryServices.DirectorySearcher
+	$objSearch.SearchRoot = "LDAP://dc=infralab, dc=local"
+	$ObjProp = "name"
+	$objSearch.Filter = $ObjFiler
+	$AllObj = $objSearch.FindAll()
+	foreach ($Obj in $AllObj)
+    	{	$objItem = $Obj.Properties
+		$objItem.name
+		$objItem.name | Out-File $ADCompFile -encoding ASCII -append
+	}
+}
+
+Write-Host "`t`tPress 1 - AD User Account Search" -ForegroundColor Red
+Write-Host "`t`tPress 2 - AD Computer Search" -ForegroundColor Red
+$Option = Read-Host
+
+switch ($Option) 
+    { 
+        1 {ADUserSearch}
+ 	2 {ADCompSearch}
+	default {"Invlid Selection"}
+    }

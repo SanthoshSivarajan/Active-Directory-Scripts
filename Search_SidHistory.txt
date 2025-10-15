@@ -1,0 +1,34 @@
+﻿<# 
+This script can be used search an Active Directory domain based on SIDHistory value. 
+
+The output file (UserInfo.txt) contains SamAccountName and SIDHistory.   
+
+www.sivarajan.com
+
+Reference: http://portal.sivarajan.com/2010/12/powershell-script-search-active.html
+
+#>
+$UserInfoFile = New-Item -type file -force "C:\Scripts\UserInfo.txt" 
+"SamAccountName`tSIDHistory" | Out-File $UserInfoFile -encoding ASCII
+$ObjFilter = "(&(objectCategory=User)(sidHistory=*))"
+$objSearch = New-Object System.DirectoryServices.DirectorySearcher
+$objSearch.PageSize = 15000
+$objSearch.Filter = $ObjFilter
+$objSearch.SearchRoot = "LDAP://dc=sivarajan, dc=com"
+$AllObj = $objSearch.FindAll()
+foreach ($Obj in $AllObj)
+	   	{	
+			$objItemT = $Obj.Properties
+			$tsam = $objItemT.samaccountname
+			write-host $tsam 
+			$objpath = $obj.path
+			$objpath1=[ADSI]"$objpath"
+			$objectSID = [byte[]]$objpath1.sidhistory.value
+			$sidHist = new-object System.Security.Principal.SecurityIdentifier $objectSID,0 
+			write-host $sidHist 
+			"$tsam`t$sidHist" | Out-File $UserInfoFile -encoding ASCII -append
+			
+		}
+		
+		
+		

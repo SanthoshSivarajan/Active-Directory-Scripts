@@ -1,0 +1,16 @@
+#
+# www.sivarajan.com
+#
+$GFile = New-Item -type file -force "C:\Scripts\GroupDetails.csv"
+Write-Host "Enter Group Name" -ForegroundColor Red
+$GName = Read-Host
+$group = [ADSI] "LDAP://$GName"
+$group.cn
+$group.cn | Out-File $GFile -encoding ASCII -append
+	foreach ($member in $group.member)
+		{
+			$Uname = new-object directoryservices.directoryentry("LDAP://$member")
+			$Uname.cn
+            $Uname.samaccountname
+			$Uname.samaccountname $Uname.cn | Out-File $GFile -encoding ASCII -append
+		}

@@ -1,0 +1,32 @@
+#
+#	Identify Last Logged On User - Santhosh Sivarajan
+#
+#	www.sivarajan.com
+#
+Cls
+$UserInfoFile = New-Item -type file -force "C:\My Data\2010\Scripts\UserInfo.csv"
+$FailedComputers_File = New-Item -type file -force "C:\My Data\2010\Scripts\FailedCompuers.csv"
+"samAccountName,ComputerName" | Out-File $UserInfoFile -encoding ASCII
+"ComputerName" | Out-File $FailedComputers_File -encoding ASCII 
+write-host -fore Blue "`t---------------------------------------------"
+write-host -fore Blue "`tComputer Name`t`tSamAccountName/Status"
+write-host -fore Blue "`t---------------------------------------------"
+Import-CSV "C:\My Data\2010\Scripts\input.csv" | % { 
+    $Computer = $_.ComputerName
+    $adminpath = Test-Path \\$Computer\admin$
+        If ($adminpath -eq "TRUE")
+		{
+			$ObjReg = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine', $Computer) 
+			$ObjRegKey = $ObjReg.OpenSubKey("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon") 
+			$UserName = $ObjRegKey.GetValue("DefaultUserName")
+			write-host -fore Green `t$Computer`t`t"-->`t`t"$UserName
+			write-host -fore Blue "`t---------------------------------------------"
+			"$UserName,$Computer" | Out-File $UserInfoFile -encoding ASCII -append
+		}
+		else
+		{
+		write-host -fore Red `t$Computer`t`t`t"-->`t`tCan't Access"
+		write-host -fore Blue "`t---------------------------------------------"
+		"$Computer" | Out-File $FailedComputers_File -encoding ASCII -append
+		}
+}

@@ -1,0 +1,10 @@
+#Thi script can be used update or populate ManagedBy attribute
+#www.sivarajan.com
+#blogs.sivarajan.com
+cls
+Import-module ActiveDirectory
+Import-CSV "C:\Scripts\servers.csv" | % {
+$Computer = $_.ComputerName
+$User = $_.UserName
+Get-ADComputer $Computer | Set-ADComputer -ManagedBy $User
+}

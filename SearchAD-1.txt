@@ -1,0 +1,26 @@
+<#
+Search Active Directory – PowerShell
+
+This script searches user accounts from an input file (input.csv). If the user does not exist in the Active Directory Domain, 
+it will be added to the output file (UserOutput.csv).  
+
+http://portal.sivarajan.com/2010/08/search-active-directory-powershell.html
+
+www.sivarajan.com
+
+#>
+
+$OutputFile= New-Item -type file -force "C:\Scripts\UserOutput.csv"
+Import-CSV D:\MigTools\input.csv |  % { 
+	$User = $_.UserName
+	$ObjFiler = "(objectCategory=User)"
+	$objSearch = New-Object System.DirectoryServices.DirectorySearcher
+	$objSearch.SearchRoot = "LDAP://dc=infralab, dc=local"
+	$ObjProp = "samaccountname"
+	$ObjFiler = "(&(objectCategory=User)(samaccountname=$User))"
+	$objSearch.Filter = $ObjFiler
+	$AllObj = $objSearch.FindAll()
+		if ([string]::IsNullOrEmpty($allobj)) 
+			{$User | Out-File $OutputFile -encoding ASCII -append}
+
+	}

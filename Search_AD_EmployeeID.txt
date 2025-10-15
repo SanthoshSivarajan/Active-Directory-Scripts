@@ -1,0 +1,10 @@
+#
+# www.sivarajan.com
+#
+Import-module ActiveDirectory 
+Import-CSV "C:\Scripts\Users.csv" | % {
+$mail = $_.mail
+$ID = $_.EmployeeID
+$user = Get-ADUser -Filter {mail -eq $mail}
+Set-ADUser $User.samaccountname -employeeID $ID
+} 

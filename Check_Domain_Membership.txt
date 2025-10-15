@@ -1,0 +1,19 @@
+#Identify Domain Membership - Santhosh Sivarajan
+#
+#www.sivarajan.com
+#
+#Ref - http://santhoshsivarajan.blogspot.com/2010/02/identify-domain-membership-powershell.html
+#
+$Domain_Success_File = New-Item -type file -force "X:\2009\Scripts\Domain_Success_File.txt"
+$Domain_Failed_File = New-Item -type file -force "X:\2009\Scripts\Domain_Failed_File.txt"
+$InputFile = Get-Content X:\2009\Scripts\Computers.txt 
+ForEach ($Comp in $InputFile){$adminpath = Test-Path \\$Comp\admin$
+if ($adminpath -eq "TRUE"){
+$ObjReg = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine', $Comp) 
+$ObjRegKey = $ObjReg.OpenSubKey("SYSTEM\\CurrentControlSet\\services\\Tcpip\\Parameters") 
+$DomName = $ObjRegKey.GetValue("Domain")
+write-host -fore Green $Comp "-->" $DomName
+Add-Content $Domain_Success_File "$Comp --> $DomName"}
+else {write-host -fore Red $Comp "-->  Computer Not Found"
+Add-Content $Domain_Failed_File $Comp}
+}

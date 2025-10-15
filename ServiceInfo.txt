@@ -1,0 +1,21 @@
+#
+# www.sivarajan.com
+#
+clear
+$Inputfile = "C:\Scripts\Input.csv"
+$OutPutFile = "C:\Scripts\ServiceInfo.csv"
+$Cred = Get-Credential
+Import-CSV $Inputfile | % { 
+$Server = $_.ServerName
+$adminpath = Test-Path \\$Server\admin$
+    If ($adminpath -eq "True")
+        {
+            Write-host -NoNewLine "Checking $Server..."
+            get-wmiobject win32_service -computername $Server -Credential $Cred | Select SystemName,DisplayName,StartName,Status | Export-CSV $OutPutFile
+            Write-host "Complete!"
+        }
+    Else 
+    	{
+    	   Write-Host -fore Red "Can't access Computer -> $Server"
+    	}
+}

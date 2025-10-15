@@ -1,0 +1,23 @@
+# Search Active Directory and Get User Information 
+# 
+# www.sivarajan.com 
+# 
+ 
+clear 
+ $UserInfoFile = New-Item -type file -force "C:\Scripts\UserInfo.txt"  
+"samaccountname`tgivenname`tSN" | Out-File $UserInfoFile -encoding ASCII 
+ Import-CSV "C:\Scripts\OU.csv" | ForEach-Object { 
+  $dn = $_.dn 
+  $ObjFilter = "(&(objectCategory=User)(objectCategory=Person))" 
+  $objSearch = New-Object System.DirectoryServices.DirectorySearcher 
+  $objSearch.PageSize = 15000 
+  $objSearch.Filter = $ObjFilter 
+  $objSearch.SearchRoot = "LDAP://$dn" 
+  $AllObj = $objSearch.FindAll() 
+  foreach ($Obj in $AllObj) 
+      { $objItemS = $Obj.Properties 
+             $Ssamaccountname = $objItemS.samaccountname 
+             $SsamaccountnameGN = $objItemS.givenname 
+             $SsamaccountnameSN = $objItemS.sn 
+             "$Ssamaccountname`t$SsamaccountnameGN`t$SsamaccountnameSN" | Out-File $UserInfoFile -encoding ASCII -append 
+   } 

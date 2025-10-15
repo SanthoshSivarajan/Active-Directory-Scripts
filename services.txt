@@ -1,0 +1,11 @@
+#Stop,Start,Enable or Disable Service - Santhosh Sivarajan
+#www.sivarajan.com
+#
+$service = "mpssvc"
+Import-CSV D:\Scripts\input.csv | % { 
+$computer = $_.ComputerName
+$result = (gwmi win32_service -computername $computer -filter "name='$service'").startservice()}
+#
+#$result = (gwmi win32_service -computername $computer -filter "name='$service'").stopservice()
+#$result = (gwmi win32_service -computername $computer -filter "name='$service'").ChangeStartMode("Disabled")
+#$result = (gwmi win32_service -computername $computer -filter "name='$service'").ChangeStartMode("Automatic")

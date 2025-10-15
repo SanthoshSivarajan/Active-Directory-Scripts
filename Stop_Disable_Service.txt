@@ -1,0 +1,10 @@
+REM
+REM http://santhoshsivarajan.blogspot.com/2010/02/stop-and-disable-service-script-batch.html
+REM
+REM 
+@echo off
+FOR /f %%i in (S:\Computers.txt) do (
+sc \\%%i stop  mpssvc
+sc \\%%i config mpssvc start= disabled
+Shutdown /f /r /t 15 /m \\%%i
+)

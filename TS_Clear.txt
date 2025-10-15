@@ -1,0 +1,25 @@
+<#
+This script can be used to search Active Directory users and clear or set thier Terminal Server Profile and Home Directory values.
+
+#>
+
+# http://www.sivarajan
+# http://blogs.sivarajan.com
+
+$TShdValue = ""
+$TSppValue = ""
+$ObjFilter = "(&(objectCategory=person)(objectCategory=User))" 
+    $objSearch = New-Object System.DirectoryServices.DirectorySearcher 
+    $objSearch.PageSize = 15000 
+    $objSearch.Filter = $ObjFilter  
+    $objSearch.SearchRoot = "LDAP://ou=test,dc=infralab,dc=local" 
+    $AllObj = $objSearch.FindAll() 
+    foreach ($Obj in $AllObj) 
+           {
+            $objItemS = $Obj.Properties
+            $UserDN = $objItemS.distinguishedname
+            $user = [ADSI] "LDAP://$userDN"
+            $user.psbase.invokeSet("TerminalServicesProfilePath",$TSppValue)
+            $user.psbase.invokeSet("TerminalServicesHomeDirectory",$TShdValue)
+            $user.setinfo() 
+            }

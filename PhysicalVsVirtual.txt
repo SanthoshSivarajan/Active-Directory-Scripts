@@ -1,0 +1,10 @@
+#
+#Name: Identify the Physical Host of a Virtual Server
+#Author: Santhosh Sivarajan
+#Ref: http://santhoshsivarajan.blogspot.com/2010/01/identify-physical-host-of-virtual.html
+#
+if (Test-Path "HKLM:\SOFTWARE\Microsoft\Virtual Machine\Guest\Parameters")
+    {$regPath= "HKLM:\SOFTWARE\Microsoft\Virtual Machine\Guest\Parameters" 
+    $regValue = get-itemproperty -path $regPath 
+    $regValue | fl "VirtualMachineName","PhysicalHostNameFullyQualified"}
+else {write-host -fore Green "Not a Virtual Machine" }

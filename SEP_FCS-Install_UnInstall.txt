@@ -1,0 +1,229 @@
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+'
+'	Name	:Symantec AntiVirus & Symantec End Point Uninstallation and Forefront Client Security Installation Script
+'
+'	Author	:Santhosh Sivarajan
+''
+'	Date	:06/25/2009
+'
+'	Ref	:http://santhoshsivarajan.blogspot.com/2010/01/uninstall-symantec-and-install.html
+'
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Option Explicit
+ 
+const HKEY_LOCAL_MACHINE = &H80000002
+Dim SProductName, SProductKey, SymProductName, SymProductKey, FProductName, FProductKey, Msg, MsgBoxStyle, RegKey
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sub GetSEPPassKey(Keyname)
+Dim bKey
+		
+On Error Resume Next
+
+bKey = oShell.RegRead(keyName)
+ 
+	If TypeName (bKey) = "Null" Then
+		RegKey = 0
+	Else
+		RegKey = 1
+	End If
+'wscript.echo "Regkey-> "&RegKey
+end sub
+
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sub ChangeSEPPassKey()
+dim oShell, RegValue, Rpath
+Rpath = "HKEY_LOCAL_MACHINE\SOFTWARE\Intel\LANDesk\VirusProtect6\CurrentVersion\AdministratorOnly\Security\UseVPUninstallPassword"
+ 
+Set oShell = CreateObject("Wscript.Shell")
+
+GetSEPPassKey(Rpath)
+'wscript.echo "Regkey-> "&RegKey
+If RegKey = 1 then
+		'Msg=MsgBox ("Value Exist", 0, "IT Services")
+RegValue=oshell.RegRead(Rpath)
+'wscript.echo "RegValue-> "&RegValue
+	If RegValue = 1 Then
+		oshell.RegWrite "HKEY_LOCAL_MACHINE\SOFTWARE\INTEL\LANDesk\VirusProtect6\CurrentVersion\AdministratorOnly\Security\UseVPUninstallPassword", 0, "REG_DWORD"
+		'wscript.echo "Registry Value Changed"
+	End if
+End If
+ 
+Set oShell = Nothing
+
+end sub
+
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sub GetSEPKey()
+ 
+dim oReg, sPath, aKeys, sName, sKey
+Set oReg = GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv")
+ 
+sPath = "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+oReg.EnumKey HKEY_LOCAL_MACHINE, sPath, aKeys
+ 
+For Each sKey in aKeys
+        oReg.GetStringValue HKEY_LOCAL_MACHINE, sPath & "\" & sKey, "DisplayName", sName
+        If Not IsNull(sName) Then 
+               if (sName = "Symantec Endpoint Protection") then
+                       SProductKey = sKey
+                       SProductName = sName
+               end if
+        end if
+Next
+end sub
+ 
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sub UninstallSEP(key, name)
+dim cmd, objShell, iReturn, oshell
+
+cmd = "C:\windows\system32\msiexec.exe /q/x " & key
+set objShell = wscript.createObject("wscript.shell")
+ 
+objShell.LogEvent 0, "Removing the program [" & name & "] under Product Key [" & key & "]" & vbCrLf & "Executing command: " & vbCrLf & cmd
+ 
+iReturn=objShell.Run(cmd,1,TRUE)
+ 
+	if (iReturn = 0) then
+        	objShell.LogEvent 0, "Program [" & name & "] was successfully removed"
+	else
+        	objShell.LogEvent 0, "Failed to remove the program [" & name & "]."
+	end if
+ 
+Set objShell = Nothing  
+end sub
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sub GetSymKey()
+ 
+dim oReg, sPath, aKeys, sName, sKey
+Set oReg = GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv")
+ 
+sPath = "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+oReg.EnumKey HKEY_LOCAL_MACHINE, sPath, aKeys
+ 
+For Each sKey in aKeys
+        oReg.GetStringValue HKEY_LOCAL_MACHINE, sPath & "\" & sKey, "DisplayName", sName
+
+        If Not IsNull(sName) Then 
+               if (sName = "Symantec AntiVirus") then
+                       SymProductKey = sKey
+                       SymProductName = sName
+               end if
+        end if
+Next
+end sub
+ 
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+sub UninstallSym(key, name)
+dim cmd, objShell, iReturn, oshell
+'wscript.echo "Executing MSIEXEC Command"
+cmd = "C:\windows\system32\msiexec.exe /q/x " & key
+set objShell = wscript.createObject("wscript.shell")
+ 
+objShell.LogEvent 0, "Removing the program [" & name & "] under Product Key [" & key & "]" & vbCrLf & "Executing command: " & vbCrLf & cmd
+ 
+iReturn=objShell.Run(cmd,1,TRUE)
+ 
+	if (iReturn = 0) then
+        	objShell.LogEvent 0, "Program [" & name & "] was successfully removed"
+	else
+        	objShell.LogEvent 0, "Failed to remove the program [" & name & "]."
+	end if
+
+'wscript.echo "Before Shutdown"
+objShell.Run "C:\WINDOWS\system32\shutdown.exe -r -t 0" 
+'wscript.echo "After Shutdown"
+Set objShell = Nothing  
+end sub
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sub GetFCSKey()
+ 
+dim oReg, sPath, aKeys, sName, sKey
+Set oReg = GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv")
+ 
+sPath = "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+oReg.EnumKey HKEY_LOCAL_MACHINE, sPath, aKeys
+ 
+For Each sKey in aKeys
+        oReg.GetStringValue HKEY_LOCAL_MACHINE, sPath & "\" & sKey, "DisplayName", sName
+        If Not IsNull(sName) Then 
+               if (sName = "Microsoft Forefront Client Security Antimalware Service") then
+                       FProductKey = sKey
+                       FProductName = sName
+               end if
+        end if
+Next
+ 
+end sub
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sub InstallFCS()
+dim objwshShell, sComputerName, x86InstallLocation, x64InstallLocation, InstallationPath, LogsPath, Proc, intFCS, sInstallCommand
+Set objWshShell = WScript.CreateObject("WScript.Shell")
+sComputerName = objWshShell.ExpandEnvironmentStrings("%COMPUTERNAME%")
+x86InstallLocation = "\\houlab01.infralab.local\X86\CLIENTSETUP.EXE /CG DPFCS /MS houfcs01.infralab.local"
+x64InstallLocation = "\\houlab01.infralab.local\X64\CLIENTSETUP.EXE /CG DPFCS /MS houfcs01.infralab.local"
+InstallationPath = "C:\Program Files\Forefront Client Security"
+LogsPath = "C:\Program Files\Forefront Client Security\Logs"
+
+Proc = objWshShell.RegRead("HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment\PROCESSOR_ARCHITECTURE")
+
+	If Proc = "x86" Then
+		sInstallCommand = x86InstallLocation & " /I " & Chr(34) & InstallationPath & Chr(34) & " /L " & Chr(34) & LogsPath & Chr(34)
+	Else
+		sInstallCommand = x64InstallLocation & " /I " & Chr(34) & InstallationPath & Chr(34) & " /L " & Chr(34) & LogsPath & Chr(34)
+	End If
+
+intFCS = objWshShell.Run(sInstallCommand, 0, TRUE)
+'Wscript.echo "Before GPUpdate"
+objwshShell.Run "C:\WINDOWS\system32\gpupdate.exe /force" 
+'Wscript.echo "After GPUpdate"
+end sub
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+SProductKey = ""
+SProductName = ""
+SymProductKey = ""
+SymProductName = ""
+FProductKey = ""
+FProductName = ""
+
+
+call GetSEPKey()
+
+	if Not (SProductKey = "") then
+		'Msg=MsgBox ("Uninstallating Symantec Endpoint", 0, "IT Services")
+		Call ChangeSEPPassKey()
+        	call UninstallSEP(SProductKey, SProductName)
+		'SymProductKey = ""
+		'SymProductName = ""
+	end if
+
+
+call GetSymKey()
+
+	if Not (SymProductKey = "") then
+		'Msg=MsgBox ("Uninstallating Symantec AntiVirus", 0, "IT Services")
+		Call ChangeSEPPassKey()
+        	call UninstallSym(SymProductKey, SymProductName)
+		'SymProductKey = ""
+		'SymProductName = ""
+	end if
+
+call GetFCSKey()
+	if (FProductKey = "" And SProductKey = "" And  SymProductKey = "") then
+		'Msg=MsgBox ("Installing Microsoft ForeFront Clinet Software", 0, "IT Services")
+        	call InstallFCS()
+	end if
+

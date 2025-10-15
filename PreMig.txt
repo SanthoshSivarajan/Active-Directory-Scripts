@@ -1,0 +1,23 @@
+#
+#Pre-Migration Script
+#
+#
+#Ref: http://santhoshsivarajan.blogspot.com/2010/01/check-admin-share-using-poweshell.html
+#
+$ComputerFile = New-Item -type file -force "D:\MigTools\Success_Computers.txt"
+$FailedComputerFile = New-Item -type file -force "D:\MigTools\Failed_Computers.txt"
+$UserFile = New-Item -type file -force "D:\MigTools\UserNames.txt"
+write-host -fore Blue "`tStatus `t`t`tComputer Name `t`tUser Name"
+write-host -fore Blue "`t---------------------------------------------"
+Import-CSV D:\MigTools\input.csv |  % { 
+    $Computer = $_.ComputerName
+    $User = $_.UserName
+    $adminpath = Test-Path \\$Computer\admin$
+        If ($adminpath -eq "TRUE"){
+            write-host -fore Green "`tAdmin$ Success`t`t" $Computer "`t" $User
+            Add-Content $ComputerFile $Computer
+            Add-Content $UserFile $User}
+        else{
+            write-host -fore Red "`tAdmin$ Failed`t`t" $Computer "`t" $User
+            Add-Content $FailedComputerFile $Computer}
+            write-host -fore Blue "`t---------------------------------------------"}

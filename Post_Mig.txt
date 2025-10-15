@@ -1,0 +1,12 @@
+@echo off
+REM	Name	:Post Migration Script - Change Default Domain Name
+REM
+REM	Ref	:http://santhoshsivarajan.blogspot.com/2010/01/change-default-domain-name-log-on-to.html
+REM
+FOR /f %%i in (c:\computers.txt) do (
+Reg Add "\\%%i\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v DefaultDomainName /t REG_SZ /d KERALA /f
+Reg Add "\\%%i\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AltDefaultDomainName /t REG_SZ /d KERALA /f
+Reg Add "\\%%i\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v CachePrimaryDomain /t REG_SZ /d KERALA /f
+shutdown /f /r /t 5 /m \\%%i)
+
+

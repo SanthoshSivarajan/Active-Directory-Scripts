@@ -1,0 +1,36 @@
+#
+#	Drive Space Info - Santhosh Sivarajan
+#
+#	www.sivarajan.com
+#	blogs.sivarajan.com
+
+Cls
+$CompInfoFile = New-Item -type file -force "C:\Scripts\ComputerInfo.csv"
+$FailedComputers_File = New-Item -type file -force "C:\Scripts\FailedCompuers.csv"
+"ComputerName`t`t`tDrive`t`t`tCapacity`t`t`tFree Space" | Out-File $CompInfoFile -encoding ASCII
+"ComputerName" | Out-File $FailedComputers_File -encoding ASCII 
+write-host -fore Blue "`t---------------------------------------------------------"
+write-host -fore Blue "`tComputer Name`t`tDrive`t`tCapacity`t`tFree Splace`t"
+write-host -fore Blue "`t---------------------------------------------------------"
+Import-CSV "C:\Scripts\computers.csv" | % { 
+    $Computer = $_.ComputerName
+	$adminpath = Test-Path \\$computer\admin$
+	If ($adminpath -eq "True")
+		{
+           $Cdisks = get-wmiobject Win32_LogicalDisk -comp $computer -Filter "DriveType = 3"
+		   foreach($Cdisk in $Cdisks)	
+				{
+                    $CdeviceID = $Cdisk.DeviceID		
+					$Csize = $Cdisk.Size / 1GB		
+					$Cfreespace = $Cdisk.FreeSpace / 1GB	
+                    write-host -fore Blue "`t$Computer`t`t`t$CdeviceID`t`t`t$Csize GB`t`t`t$Cfreespace GB`t"
+                   "$Computer`t`t`t$CdeviceID`t`t`t$Csize GB`t`t`t$Cfreespace GB`t" | Out-File $CompInfoFile -encoding ASCII -append
+		        }
+		}
+	Else 
+		{
+			Write-Host "Can't access Computer -> $computer"
+			"$Computer" | Out-File FailedComputers_File -encoding ASCII -append
+		}
+	}
+    

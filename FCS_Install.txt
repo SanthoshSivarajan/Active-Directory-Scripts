@@ -1,0 +1,79 @@
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+'
+'	Name	:Forefront Client Security Installation Script
+'
+'	Author	:Santhosh Sivarajan
+''
+'	Date	:01/25/2009
+'
+'	Ref	:http://blogs.sivarajan.com
+'
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Option Explicit
+ 
+const HKEY_LOCAL_MACHINE = &H80000002
+Dim FProductName, FProductKey, Msg, MsgBoxStyle, RegKey
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sub GetFCSKey()
+ 
+dim oReg, sPath, aKeys, sName, sKey
+Set oReg = GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv")
+ 
+sPath = "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+oReg.EnumKey HKEY_LOCAL_MACHINE, sPath, aKeys
+ 
+For Each sKey in aKeys
+        oReg.GetStringValue HKEY_LOCAL_MACHINE, sPath & "\" & sKey, "DisplayName", sName
+        If Not IsNull(sName) Then 
+               if (sName = "Microsoft Forefront Client Security Antimalware Service") then
+                       FProductKey = sKey
+                       FProductName = sName
+               end if
+        end if
+Next
+ 
+end sub
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sub InstallFCS()
+dim objwshShell, sComputerName, x86InstallLocation, x64InstallLocation, InstallationPath, LogsPath, Proc, intFCS, sInstallCommand
+Set objWshShell = WScript.CreateObject("WScript.Shell")
+sComputerName = objWshShell.ExpandEnvironmentStrings("%COMPUTERNAME%")
+x86InstallLocation = "\\houlab01.infralab.local\X86\CLIENTSETUP.EXE /CG DPFCS /MS houfcs01.infralab.local"
+x64InstallLocation = "\\houlab01.infralab.local\X64\CLIENTSETUP.EXE /CG DPFCS /MS houfcs01.infralab.local"
+InstallationPath = "C:\Program Files\Forefront Client Security"
+LogsPath = "C:\Program Files\Forefront Client Security\Logs"
+
+Proc = objWshShell.RegRead("HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment\PROCESSOR_ARCHITECTURE")
+
+	If Proc = "x86" Then
+		sInstallCommand = x86InstallLocation & " /I " & Chr(34) & InstallationPath & Chr(34) & " /L " & Chr(34) & LogsPath & Chr(34)
+	Else
+		sInstallCommand = x64InstallLocation & " /I " & Chr(34) & InstallationPath & Chr(34) & " /L " & Chr(34) & LogsPath & Chr(34)
+	End If
+
+intFCS = objWshShell.Run(sInstallCommand, 0, TRUE)
+'Wscript.echo "Before GPUpdate"
+objwshShell.Run "C:\WINDOWS\system32\gpupdate.exe /force" 
+'Wscript.echo "After GPUpdate"
+end sub
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+FProductKey = ""
+FProductName = ""
+
+
+call GetFCSKey()
+	if (FProductKey = "" ) then
+		'Msg=MsgBox ("Installing Microsoft ForeFront Clinet Software", 0, "IT Services")
+        	call InstallFCS()
+	end if
+
+

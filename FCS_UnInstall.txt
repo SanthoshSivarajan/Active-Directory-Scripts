@@ -1,0 +1,86 @@
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+'
+'	Name	:Forefront Client Security (FCS) Uninstallation Script
+'
+'	Author	:Santhosh Sivarajan
+''
+'	Date	:11/08/2009
+'
+'	Ref	:http://santhoshsivarajan.blogspot.com/2010/02/forefront-client-security-fcs.html
+'
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Option Explicit
+ 
+const HKEY_LOCAL_MACHINE = &H80000002
+Dim SASProductName, SASProductKey, SSSProductName, SSSProductKey, Msg, MsgBoxStyle, RegKey
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sub GetFCSKey()
+ 
+dim oReg, sPath, aKeys, sName, sKey
+Set oReg = GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv")
+ 
+sPath = "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+oReg.EnumKey HKEY_LOCAL_MACHINE, sPath, aKeys
+ 
+For Each sKey in aKeys
+        oReg.GetStringValue HKEY_LOCAL_MACHINE, sPath & "\" & sKey, "DisplayName", sName
+        If Not IsNull(sName) Then 
+               if (sName = "Microsoft Forefront Client Security Antimalware Service") then
+                       SASProductKey = sKey
+                       SASProductName = sName
+               end if
+               if (sName = "Microsoft Forefront Client Security State Assessment Service") then
+                       SSSProductKey = sKey
+                       SSSProductName = sName
+        end if
+end if
+Next
+end sub
+ 
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sub UninstallFCS(key, name)
+dim cmd, objShell, iReturn, oshell
+
+cmd = "C:\windows\system32\msiexec.exe /q/x " & key
+set objShell = wscript.createObject("wscript.shell")
+ 
+objShell.LogEvent 0, "Removing the program [" & name & "] under Product Key [" & key & "]" & vbCrLf & "Executing command: " & vbCrLf & cmd
+ 
+iReturn=objShell.Run(cmd,1,TRUE)
+ 
+	if (iReturn = 0) then
+        	objShell.LogEvent 0, "Program [" & name & "] was successfully removed"
+	else
+        	objShell.LogEvent 0, "Failed to remove the program [" & name & "]."
+	end if
+ 
+Set objShell = Nothing  
+end sub
+
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+SASProductKey = ""
+SASProductName = ""
+SSSProductKey = ""
+SSSProductName = ""
+
+
+call GetFCSKey()
+
+	if Not (SASProductKey = "") then
+		call UninstallFCS(SASProductKey, SASProductName)
+	end if
+
+	if Not (SSSProductKey = "") then
+		call UninstallFCS(SSSProductKey, SSSProductName)
+	end if
+
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
